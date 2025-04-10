@@ -4,10 +4,26 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "build": "echo 'No build step required'"
   },
   "dependencies": {
-    "dotenv": "^16.0.3",
-    "express": "^4.21.2"
-  }
+    "@farcaster/frame-sdk": "^0.0.34",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mongodb": "^6.3.0",
+    "node-cron": "^3.0.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mt12345678910/vibecheck.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mt12345678910/vibecheck/issues"
+  },
+  "homepage": "https://github.com/mt12345678910/vibecheck#readme",
+  "description": ""
 }
