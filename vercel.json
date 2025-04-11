@@ -8,6 +8,13 @@
   ],
   "routes": [
     {
+      "src": "/health",
+      "dest": "index.js",
+      "headers": {
+        "Access-Control-Allow-Origin": "*"
+      }
+    },
+    {
       "src": "/api/health",
       "dest": "index.js",
       "headers": {

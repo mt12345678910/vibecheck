@@ -23,7 +23,11 @@ const moods = [
 // Middleware to parse request bodies (needed for frame actions)
 app.use(express.json());
 
-// Health check endpoint
+// Health check endpoints
+app.get('/health', (req, res) => {
+  res.json({ ok: true, status: 'healthy' });
+});
+
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, status: 'healthy' });
 });
