@@ -149,6 +149,11 @@ app.get('/image', (req, res) => {
     res.redirect(302, imageUrl);
 });
 
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ ok: true, status: 'healthy' });
+});
+
 // Test MongoDB connection route
 app.get('/test-db', async (req, res) => {
   try {
