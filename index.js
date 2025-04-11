@@ -23,6 +23,22 @@ const moods = [
 // Middleware to parse request bodies (needed for frame actions)
 app.use(express.json());
 
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ ok: true, status: 'healthy' });
+});
+
+// Test MongoDB connection route
+app.get('/test-db', async (req, res) => {
+  try {
+    const db = await connectToDatabase();
+    res.json({ message: 'Successfully connected to MongoDB!' });
+  } catch (error) {
+    console.error('Database connection error:', error);
+    res.status(500).json({ error: 'Failed to connect to database' });
+  }
+});
+
 // Function to get the base URL
 const getBaseUrl = (req) => {
     const protocol = req.headers['x-forwarded-proto'] || req.protocol;
@@ -87,9 +103,6 @@ app.get('/', async (req, res) => {
 
     res.setHeader('Content-Type', 'text/html');
     res.status(200).send(frameHtml);
-
-    // Call ready to hide the splash screen
-    await sdk.actions.ready();
 });
 
 // Action route (POST)
@@ -116,16 +129,16 @@ app.post('/action', async (req, res) => {
         const todayVotes = await getVotesForDate(currentDate);
         console.log(`Today's votes (${currentDate}):`, todayVotes);
 
-        // Respond with a frame showing the selected mood and suggested song
-        const responseImageUrl = `${baseUrl}/image?text=You+chose:+${encodeURIComponent(selectedMood.emoji)}%0AEnjoy+this+tune!&t=${Date.now()}`;
+        // Respond with a frame showing the selected mood
+        const responseImageUrl = `${baseUrl}/image?text=You+chose:+${encodeURIComponent(selectedMood.emoji)}%0AThanks+for+voting!&t=${Date.now()}`;
         const frameHtml = `<!DOCTYPE html>
 <html>
 <head>
     <meta property="fc:frame" content="vNext">
     <meta property="fc:frame:image" content="${responseImageUrl}">
-    <meta property="fc:frame:button:1" content="Listen Now">
+    <meta property="fc:frame:button:1" content="View Results">
     <meta property="fc:frame:button:1:action" content="link">
-    <meta property="fc:frame:button:1:target" content="${selectedMood.songUrl}">
+    <meta property="fc:frame:button:1:target" content="${baseUrl}/admin?secret=${process.env.ADMIN_SECRET}">
     <meta property="fc:frame:button:2" content="Try Again">
     <meta property="fc:frame:button:2:action" content="post">
     <meta property="fc:frame:button:2:target" content="${baseUrl}/"> 
@@ -149,22 +162,6 @@ app.get('/image', (req, res) => {
     res.redirect(302, imageUrl);
 });
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ ok: true, status: 'healthy' });
-});
-
-// Test MongoDB connection route
-app.get('/test-db', async (req, res) => {
-  try {
-    const db = await connectToDatabase();
-    res.json({ message: 'Successfully connected to MongoDB!' });
-  } catch (error) {
-    console.error('Database connection error:', error);
-    res.status(500).json({ error: 'Failed to connect to database' });
-  }
-});
-
 // --- Helper Functions ---
 async function calculateDailyResults() {
     const currentDate = getCurrentDateString();
@@ -186,7 +183,7 @@ async function calculateDailyResults() {
 // --- Vercel Cron Job Endpoints ---
 // These endpoints will be called by Vercel's cron job system
 
-// Reset data endpoint (to be called by Vercel cron job at 8:00 AM America/New_York time)
+// Reset data endpoint (to be called by Vercel cron job at midnight UTC)
 app.get('/api/cron/reset', async (req, res) => {
     // Verify the request is from Vercel's cron system
     const authHeader = req.headers.authorization;
@@ -212,7 +209,7 @@ app.get('/api/cron/reset', async (req, res) => {
     }
 });
 
-// Announce mood endpoint (to be called by Vercel cron job at 8:00 PM America/New_York time)
+// Announce mood endpoint (to be called by Vercel cron job at 8:00 PM UTC)
 app.get('/api/cron/announce', async (req, res) => {
     // Verify the request is from Vercel's cron system
     const authHeader = req.headers.authorization;
@@ -237,7 +234,7 @@ app.get('/api/cron/announce', async (req, res) => {
         if (winningMoodIndex !== -1) {
             const winningMood = moods[winningMoodIndex];
             console.log(`Today's mood is: ${winningMood.emoji} ${winningMood.mood} with ${maxVotes} votes.`);
-            // TODO: Post a cast or send notification with winningMood.emoji, winningMood.mood, and winningMood.songUrl
+            // TODO: Post a cast or send notification with winningMood.emoji, winningMood.mood
         } else {
             console.log("No votes recorded today.");
             // TODO: Post a default message?
