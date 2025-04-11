@@ -53,5 +53,6 @@
       "path": "/api/cron/announce",
       "schedule": "0 20 * * *"
     }
-  ]
+  ],
+  "comment": "Updated configuration without headers"
 } 
