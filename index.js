@@ -149,6 +149,17 @@ app.get('/image', (req, res) => {
     res.redirect(302, imageUrl);
 });
 
+// Test MongoDB connection route
+app.get('/test-db', async (req, res) => {
+  try {
+    const db = await connectToDatabase();
+    res.json({ message: 'Successfully connected to MongoDB!' });
+  } catch (error) {
+    console.error('Database connection error:', error);
+    res.status(500).json({ error: 'Failed to connect to database' });
+  }
+});
+
 // --- Helper Functions ---
 async function calculateDailyResults() {
     const currentDate = getCurrentDateString();
@@ -391,17 +402,6 @@ app.get('/admin', async (req, res) => {
         console.error("Error generating admin dashboard:", error);
         res.status(500).send('Internal Server Error');
     }
-});
-
-// Test MongoDB connection
-app.get('/test-db', async (req, res) => {
-  try {
-    const db = await connectToDatabase();
-    res.json({ message: 'Successfully connected to MongoDB!' });
-  } catch (error) {
-    console.error('Database connection error:', error);
-    res.status(500).json({ error: 'Failed to connect to database' });
-  }
 });
 
 // --- Server Start ---
