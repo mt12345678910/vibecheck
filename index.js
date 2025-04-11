@@ -1,6 +1,5 @@
 import 'dotenv/config';
 import express from 'express';
-import { sdk } from '@farcaster/frame-sdk';
 import { 
   saveVote, 
   getVotesForDate, 
@@ -14,11 +13,11 @@ const PORT = process.env.PORT || 3000;
 
 // Define mood data
 const moods = [
-    { mood: 'Happy', emoji: '😊', songUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' }, // Placeholder - Happy
-    { mood: 'Down', emoji: '😢', songUrl: 'https://www.youtube.com/watch?v=o_1aF54DOp0' }, // Placeholder - Down
-    { mood: 'Motivated', emoji: '😤', songUrl: 'https://www.youtube.com/watch?v=btPJPFnesV4' }, // Placeholder - Motivated
-    { mood: 'Thoughtful', emoji: '🤔', songUrl: 'https://www.youtube.com/watch?v=5qap5aO4i9A' }, // Placeholder - Thoughtful
-    { mood: 'Excited', emoji: '🤩', songUrl: 'https://www.youtube.com/watch?v=3GwjfUFyY6M' }  // Placeholder - Excited
+    { mood: 'Happy', emoji: '😊' },
+    { mood: 'Down', emoji: '😢' },
+    { mood: 'Motivated', emoji: '😤' },
+    { mood: 'Thoughtful', emoji: '🤔' },
+    { mood: 'Excited', emoji: '🤩' }
 ];
 
 // Middleware to parse request bodies (needed for frame actions)
@@ -36,6 +35,31 @@ const getBaseUrl = (req) => {
     }
     return `${protocol}://${host}`;
 };
+
+// Login route
+app.get('/login', (req, res) => {
+    const baseUrl = getBaseUrl(req);
+    const frameImageUrl = `${baseUrl}/image?text=Welcome+to+Vibe+Check!%0A%0APlease+login+to+continue&t=${Date.now()}`;
+    
+    const frameHtml = `<!DOCTYPE html>
+<html>
+<head>
+    <meta property="og:title" content="Vibe Check - Login">
+    <meta property="fc:frame" content="vNext">
+    <meta property="fc:frame:image" content="${frameImageUrl}">
+    <meta property="fc:frame:button:1" content="Login with Farcaster">
+    <meta property="fc:frame:button:1:action" content="post">
+    <meta property="fc:frame:button:1:target" content="${baseUrl}/">
+    <meta property="fc:frame:button:2" content="Learn More">
+    <meta property="fc:frame:button:2:action" content="link">
+    <meta property="fc:frame:button:2:target" content="https://warpcast.com/~/channels/vibe-check">
+</head>
+<body>Vibe Check Frame Login</body>
+</html>`;
+
+    res.setHeader('Content-Type', 'text/html');
+    res.status(200).send(frameHtml);
+});
 
 // Route for the initial frame (GET)
 app.get('/', async (req, res) => {
@@ -213,6 +237,171 @@ app.get('/api/cron/announce', async (req, res) => {
         console.error("Error announcing daily mood:", error);
         res.status(500).json({ error: 'Failed to announce daily mood' });
     }
+});
+
+// Admin dashboard route
+app.get('/admin', async (req, res) => {
+    // In a real application, you would add authentication here
+    // For now, we'll use a simple secret key check
+    const adminSecret = req.query.secret;
+    if (adminSecret !== process.env.ADMIN_SECRET) {
+        return res.status(401).send('Unauthorized');
+    }
+    
+    try {
+        const currentDate = getCurrentDateString();
+        const votes = await getVotesForDate(currentDate);
+        const results = await calculateDailyResults();
+        
+        // Count total votes
+        const totalVotes = Object.values(results).reduce((sum, count) => sum + count, 0);
+        
+        // Find the winning mood
+        let winningMoodIndex = -1;
+        let maxVotes = -1;
+        
+        for (const moodIndex in results) {
+            if (results[moodIndex] > maxVotes) {
+                maxVotes = results[moodIndex];
+                winningMoodIndex = parseInt(moodIndex, 10);
+            }
+        }
+        
+        const winningMood = winningMoodIndex !== -1 ? moods[winningMoodIndex] : null;
+        
+        // Create HTML for the admin dashboard
+        const dashboardHtml = `<!DOCTYPE html>
+<html>
+<head>
+    <title>Vibe Check Admin Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .stats {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .mood-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .mood-name {
+            width: 100px;
+            font-weight: bold;
+        }
+        .bar-container {
+            flex-grow: 1;
+            background-color: #eee;
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .bar {
+            height: 100%;
+            background-color: #4CAF50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            transition: width 0.3s ease;
+        }
+        .winner {
+            background-color: #FF9800;
+        }
+        .total {
+            text-align: center;
+            font-size: 18px;
+            margin-top: 20px;
+        }
+        .date {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Vibe Check Admin Dashboard</h1>
+    <div class="date">Date: ${currentDate}</div>
+    
+    <div class="stats">
+        <h2>Today's Mood Results</h2>
+        ${Object.entries(results).map(([index, count]) => {
+            const percentage = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+            const isWinner = parseInt(index) === winningMoodIndex;
+            return `
+            <div class="mood-bar">
+                <div class="mood-name">${moods[index].emoji} ${moods[index].mood}</div>
+                <div class="bar-container">
+                    <div class="bar ${isWinner ? 'winner' : ''}" style="width: ${percentage}%">
+                        ${count} (${percentage}%)
+                    </div>
+                </div>
+            </div>
+            `;
+        }).join('')}
+        
+        <div class="total">
+            Total Votes: ${totalVotes}
+            ${winningMood ? `<br>Winning Mood: ${winningMood.emoji} ${winningMood.mood}` : ''}
+        </div>
+    </div>
+    
+    <div class="stats">
+        <h2>Recent Votes</h2>
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">FID</th>
+                    <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Mood</th>
+                    <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${votes.slice(0, 20).map(vote => `
+                <tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #ddd;">${vote.fid}</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #ddd;">${moods[vote.moodIndex].emoji} ${moods[vote.moodIndex].mood}</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #ddd;">${new Date(vote.updatedAt).toLocaleString()}</td>
+                </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>`;
+        
+        res.setHeader('Content-Type', 'text/html');
+        res.status(200).send(dashboardHtml);
+    } catch (error) {
+        console.error("Error generating admin dashboard:", error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+// Test MongoDB connection
+app.get('/test-db', async (req, res) => {
+  try {
+    const db = await connectToDatabase();
+    res.json({ message: 'Successfully connected to MongoDB!' });
+  } catch (error) {
+    console.error('Database connection error:', error);
+    res.status(500).json({ error: 'Failed to connect to database' });
+  }
 });
 
 // --- Server Start ---
