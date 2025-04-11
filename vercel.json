@@ -2,59 +2,59 @@
   "version": 2,
   "builds": [
     {
-      "src": "index.js",
+      "src": "api/index.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/health",
-      "dest": "index.js",
+      "dest": "/api/index.js",
       "headers": {
         "Access-Control-Allow-Origin": "*"
       }
     },
     {
       "src": "/api/health",
-      "dest": "index.js",
+      "dest": "/api/index.js",
       "headers": {
         "Access-Control-Allow-Origin": "*"
       }
     },
     {
       "src": "/test-db",
-      "dest": "index.js",
+      "dest": "/api/index.js",
       "headers": {
         "Access-Control-Allow-Origin": "*"
       }
     },
     {
       "src": "/api/cron/reset",
-      "dest": "index.js"
+      "dest": "/api/index.js"
     },
     {
       "src": "/api/cron/announce",
-      "dest": "index.js"
+      "dest": "/api/index.js"
     },
     {
       "src": "/admin",
-      "dest": "index.js"
+      "dest": "/api/index.js"
     },
     {
       "src": "/image",
-      "dest": "index.js"
+      "dest": "/api/index.js"
     },
     {
       "src": "/action",
-      "dest": "index.js"
+      "dest": "/api/index.js"
     },
     {
       "src": "/login",
-      "dest": "index.js"
+      "dest": "/api/index.js"
     },
     {
       "src": "/(.*)",
-      "dest": "index.js",
+      "dest": "/api/index.js",
       "headers": {
         "Access-Control-Allow-Origin": "*"
       }
