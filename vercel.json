@@ -47,17 +47,11 @@
   "crons": [
     {
       "path": "/api/cron/reset",
-      "schedule": "0 0 * * *",
-      "headers": {
-        "Authorization": "Bearer cron_df2d7910f0ed7b1bc041f3b1caa751b4"
-      }
+      "schedule": "0 0 * * *"
     },
     {
       "path": "/api/cron/announce",
-      "schedule": "0 20 * * *",
-      "headers": {
-        "Authorization": "Bearer cron_df2d7910f0ed7b1bc041f3b1caa751b4"
-      }
+      "schedule": "0 20 * * *"
     }
   ]
 } 
