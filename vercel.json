@@ -8,39 +8,7 @@
   ],
   "routes": [
     {
-      "src": "/test-db",
-      "dest": "index.js"
-    },
-    {
-      "src": "/admin",
-      "dest": "index.js"
-    },
-    {
-      "src": "/api/cron/reset",
-      "dest": "index.js"
-    },
-    {
-      "src": "/api/cron/announce",
-      "dest": "index.js"
-    },
-    {
-      "src": "/api/health",
-      "dest": "index.js"
-    },
-    {
-      "src": "/image",
-      "dest": "index.js"
-    },
-    {
-      "src": "/action",
-      "dest": "index.js"
-    },
-    {
-      "src": "/login",
-      "dest": "index.js"
-    },
-    {
-      "src": "/",
+      "src": "/(.*)",
       "dest": "index.js"
     }
   ]
