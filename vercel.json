@@ -43,15 +43,5 @@
       "src": "/",
       "dest": "index.js"
     }
-  ],
-  "cron": {
-    "reset": {
-      "path": "/api/cron/reset",
-      "schedule": "0 0 * * *"
-    },
-    "announce": {
-      "path": "/api/cron/announce",
-      "schedule": "0 20 * * *"
-    }
-  }
+  ]
 } 
